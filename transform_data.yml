@@ -1,0 +1,54 @@
+---
+- name: manipulate vm disk info
+  hosts: localhost
+  gather_facts: False
+  tasks:
+  - name: Sample output of community.vmware.vmware_host_disk_info module
+    ansible.builtin.set_fact:
+      disk_info: ["\"192.168.0.182\": [\n    {\n        \"canonical_name\": \"naa.6000c296ed6217bd61df35622eb21a3a\"", "\n        \"capacity_mb\": 4096", "\n        \"device_path\": \"/vmfs/devices/disks/naa.6000c296ed6217bd61df35622eb21a3a\"", "\n        \"device_type\": \"disk\"", "\n        \"device_ctd_list\": [\n            \"vmhba0:C0:T1:L0\"\n        ]", "\n        \"disk_uid\": \"key-vim.host.ScsiDisk-02000000006000c296ed6217bd61df35622eb21a3a566972747561\"", "\n        \"display_name\": \"Local VMware Disk (naa.6000c296ed6217bd61df35622eb21a3a)\"\n    }", "\n    {\n        \"canonical_name\": \"naa.6000c2968ad7142d93faae527fe8822b\"", "\n        \"capacity_mb\": 204800", "\n        \"device_path\": \"/vmfs/devices/disks/naa.6000c2968ad7142d93faae527fe8822b\"", "\n        \"device_type\": \"disk\"", "\n        \"device_ctd_list\": [\n            \"vmhba0:C0:T3:L0\"\n        ]", "\n        \"disk_uid\": \"key-vim.host.ScsiDisk-02000000006000c2968ad7142d93faae527fe8822b566972747561\"", "\n        \"display_name\": \"Local VMware Disk (naa.6000c2968ad7142d93faae527fe8822b)\"\n    }", "]"]
+
+
+  - name: Create a list of capacities 
+    ansible.builtin.set_fact:
+      cap: "{{ disk_info | regex_findall('capacity_mb...[0-9]+.?',multiline=True) }}"
+
+  - name: Create a list of Canonical Names
+    ansible.builtin.set_fact:
+      canonical: "{{ disk_info | regex_findall('canonical_name.:..naa.\\w+.?',multiline=True) }}"
+  
+  - name: Split first canonical list element to array
+    ansible.builtin.set_fact:
+      can0: "{{ canonical[0] | split(':') }}"
+
+  - name: Keep only the canonical name portion of the array
+    ansible.builtin.set_fact:
+      can0: "{{ can0[1] }}"
+
+  - name: Split the second canonical list element to array
+    ansible.builtin.set_fact:
+      can1: "{{ canonical[1] | split(':') }}"
+
+  - name: Keep only the canonical name portion of the array
+    ansible.builtin.set_fact:
+      can1: "{{ can1[1] }}"
+  
+  - name: Split the first disk capacity to array
+    ansible.builtin.set_fact:
+      cap0: "{{ cap[0] | split(':') }}"
+
+  - name: Keep only the capacity portion of the array
+    ansible.builtin.set_fact:
+      cap0: "{{ cap0[1] }}"
+
+  - name: Split the second disk capacity to array
+    ansible.builtin.set_fact:
+      cap1: "{{ cap[1] | split(':') }}"
+
+  - name: Keep only the capacity portion of the array
+    ansible.builtin.set_fact:
+      cap1: "{{ cap1[1] }}"
+
+  - name: Render j2 template with cleaned up results
+    template:
+      src: disks.j2
+      dest: ./disks.yml
