@@ -1,5 +1,5 @@
 ---
-- name: manipulate vm disk info
+- name: manipulate vmware host disk info
   hosts: localhost
   gather_facts: False
   tasks:
