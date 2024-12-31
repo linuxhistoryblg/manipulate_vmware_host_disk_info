@@ -1,0 +1,12 @@
+---
+- name: Demo Lookup
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - disks.yml
+  tasks:
+  - name: Loop through disks.yml and create new datastore on disk with capacity > 4096
+    ansible.builtin.debug:
+      msg: "Create datastore on {{ item['value']['canonical_name'] }}"
+    when: "item['value']['capacity'] > 4096"
+    loop: "{{ disks | dict2items }}"
